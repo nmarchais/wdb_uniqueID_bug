@@ -1,15 +1,9 @@
-import {Model, Relation} from "@nozbe/watermelondb";
-import {date, field, readonly, relation} from "@nozbe/watermelondb/decorators";
+import {Model} from "@nozbe/watermelondb";
+import {date, field, readonly} from "@nozbe/watermelondb/decorators";
 import {TableName} from "../schema/tableName";
-import {Associations} from "@nozbe/watermelondb/Model";
-import ActivityWDB from "./ActivityWDB";
 
 export default class VisitWDB extends Model {
   static table = TableName.VISIT;
-
-  static associations: Associations = {
-    [TableName.ACTIVITY]: {type: 'belongs_to', key: 'id'},
-  };
 
   @field('beginIdentificationMode') beginIdentificationMode: string;
   @field('beginIdentificationCode') beginIdentificationCode: string;
@@ -42,8 +36,6 @@ export default class VisitWDB extends Model {
   @field('fillingCoinsAmount') fillingCoinsAmount: number;
   @field('fillingCoinsAmountFromAudit') fillingCoinsAmountFromAudit: number;
   @field('salePlaceStateBeforeActivity') salePlaceStateBeforeActivity: string;
-
-  @relation(TableName.ACTIVITY, 'id') activity: Relation<ActivityWDB>;
 
   @readonly @date('created_at') createdAt: Date;
   @readonly @date('updated_at') updatedAt: Date;

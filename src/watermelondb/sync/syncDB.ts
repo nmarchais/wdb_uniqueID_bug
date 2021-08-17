@@ -1,20 +1,7 @@
-import {
-  SyncArgs,
-  SyncDatabaseChangeSet,
-  synchronize,
-  SyncLog,
-} from "@nozbe/watermelondb/sync";
-import {TableNameNotSynced} from "../schema/tableNameNotSynced";
-import SalePlaceNotAffectedToUserWDB from "../model/local/SalePlaceNotAffectedToUserWDB";
-import {TableName} from "../schema/tableName";
+import {SyncArgs, synchronize, SyncLog} from "@nozbe/watermelondb/sync";
 import {Database} from "@nozbe/watermelondb";
 
-const pullSync = async (
-  lastPulledAt: number | null,
-  schemaVersion: number | undefined,
-  migration: any,
-  salePointNotAffectedToUsers: Array<{firstSync: boolean; code: string}>,
-) => {
+const pullSync = async () => {
   return {
     status: 200,
     statusText: "tout va bien",
@@ -23,77 +10,17 @@ const pullSync = async (
       changes: {},
     },
   };
-  // return axios.post("sync/db/pull", {
-  //   lastPulledAt,
-  //   schemaVersion,
-  //   migration,
-  //   salePointNotAffectedToUsers,
-  // });
 };
 
-const pushSync = async (
-  lastPulledAt: number | null,
-  changes: SyncDatabaseChangeSet,
-) => {
+const pushSync = async () => {
   return {
     status: 200,
     statusText: "tout va bien",
   };
-  // return axios.post("sync/db/push", {
-  //   lastPulledAt,
-  //   changes,
-  // });
 };
 
 // Flag permettant de savoir si une synchronisation est en cours ou non.
 let synchronizing = false;
-
-const removeTablesNotSynced = (changes: SyncDatabaseChangeSet) => {
-  for (const tableNameNotSynced of Object.values(TableNameNotSynced)) {
-    delete changes[tableNameNotSynced];
-  }
-};
-
-const updateTablesNotSynced = async (
-  database: Database,
-  dataPulled: SyncDatabaseChangeSet,
-  salePointNotAffectedToUsersFirstSync: Array<SalePlaceNotAffectedToUserWDB>,
-) => {
-  for (const sp of salePointNotAffectedToUsersFirstSync) {
-    const created = dataPulled[TableName.SALE_PLACE].created.filter(
-      csp => csp.code === sp.code,
-    );
-    if (created.length > 0) {
-      await database.write(async () => {
-        await sp.update(record => {
-          record.firstSync = false;
-          record.serverId = created[0].id;
-        });
-      });
-    }
-  }
-
-  const salePointsNotAffectedToUser: Array<SalePlaceNotAffectedToUserWDB> =
-    await database.collections
-      .get<SalePlaceNotAffectedToUserWDB>(
-        TableNameNotSynced.SalePlaceNotAffectedToUser,
-      )
-      .query()
-      .fetch();
-  for (const sp of salePointsNotAffectedToUser) {
-    const deleted = dataPulled[TableName.SALE_PLACE].deleted.filter(
-      id => id === sp.serverId,
-    );
-    if (deleted.length > 0) {
-      await database.write(async () => {
-        // await sp.markAsDeleted(); // syncable
-        await sp.destroyPermanently();
-        // TODO supprimer le point de vente et ses relations de la base de données locale
-        // TODO réaliser aussi cette suppression en fin de visite
-      });
-    }
-  }
-};
 
 export async function syncDB(database: Database, errorCounter: number = 0) {
   if (synchronizing === false || errorCounter > 0) {
@@ -122,42 +49,13 @@ const synchronizeParams = (
   log: SyncLog,
   pullOnly: boolean,
 ): SyncArgs => {
-  let dataPulled: SyncDatabaseChangeSet;
-  let salePointNotAffectedToUsers: Array<SalePlaceNotAffectedToUserWDB>;
-
   const pullChanges = async ({lastPulledAt, schemaVersion, migration}) => {
-    // console.log("lastPulledAt: " + lastPulledAt);
-    // console.log("schemaVersion: " + schemaVersion);
-    // console.log("migration: " + migration);
-
-    salePointNotAffectedToUsers = await database.collections
-      .get<SalePlaceNotAffectedToUserWDB>(
-        TableNameNotSynced.SalePlaceNotAffectedToUser,
-      )
-      .query()
-      .fetch();
-    const salePointNotAffectedToUsersMapped = salePointNotAffectedToUsers.map(
-      sp => {
-        return {
-          firstSync: sp.firstSync,
-          code: sp.code,
-          identification: sp.identification,
-        };
-      },
-    );
-
-    const response = await pullSync(
-      lastPulledAt,
-      schemaVersion,
-      migration,
-      salePointNotAffectedToUsersMapped,
-    );
+    const response = await pullSync();
     if (response.status !== 200) {
       throw new Error(response.statusText);
     }
 
-    const {changes, timestamp} = await response.data;
-    dataPulled = changes;
+    const {changes, timestamp} = response.data;
 
     // UNDER NO CIRCUMSTANCES SHOULD YOU COMMIT THESE LINES UNCOMMENTED!!!
     require("@nozbe/watermelondb/sync/debugPrintChanges").default(
@@ -165,29 +63,17 @@ const synchronizeParams = (
       false,
     );
 
-    // console.log("timestamp: " + response.data.timestamp);
-    // console.log(changes.sale_place.created);
     return {changes, timestamp};
   };
 
   const pushChanges = async ({changes, lastPulledAt}) => {
-    await updateTablesNotSynced(
-      database,
-      dataPulled,
-      salePointNotAffectedToUsers,
-    );
-
-    const modifiedChanges = {...changes};
-
-    removeTablesNotSynced(modifiedChanges);
-
     // UNDER NO CIRCUMSTANCES SHOULD YOU COMMIT THESE LINES UNCOMMENTED!!!
     require("@nozbe/watermelondb/sync/debugPrintChanges").default(
       changes,
       true,
     );
 
-    const response = await pushSync(lastPulledAt, modifiedChanges);
+    const response = await pushSync();
     if (response.status !== 200) {
       throw new Error(response.statusText);
     }

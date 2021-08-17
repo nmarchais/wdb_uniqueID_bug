@@ -17,12 +17,6 @@ export default class WorkingDayWDB extends Model {
   @field('cashRegisterEnd') cashRegisterEnd: number;
   @date('beginDate') beginDate: Date;
   @date('endDate') endDate: Date;
-  @date('firstActivityStartDate') firstActivityStartDate: Date;
-  @date('lastActivityStartDate') lastActivityStartDate: Date;
-  @field('numberOfActivitiesPerformed') numberOfActivitiesPerformed: number;
-  @field('numberOfVisitsPerformed') numberOfVisitsPerformed: number;
-  @field('numberOfBreaksPerformed') numberOfBreaksPerformed: number;
-  @field('numberOfVehicleLoadingsPerformed') numberOfVehicleLoadingsPerformed: number;
 
   @relation(TableName.VEHICLE, 'vehicle_id') vehicle: Relation<VehicleWDB>;
 

@@ -19,6 +19,7 @@ export const createVisit = async (
     const date = Date.now();
     const dirtyRaw = {
       id: activity.id,
+      // id: "works_with_unique_id",
       beginIdentificationMode: "NFC",
       beginIdentificationCode: "toto",
       manualIdentificationStartComment: "comment",

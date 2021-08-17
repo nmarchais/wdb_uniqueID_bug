@@ -4,7 +4,7 @@ import {Database} from "@nozbe/watermelondb";
 const pullSync = async () => {
   return {
     status: 200,
-    statusText: "tout va bien",
+    statusText: "OK",
     data: {
       timestamp: Date.now(),
       changes: {},
@@ -15,31 +15,24 @@ const pullSync = async () => {
 const pushSync = async () => {
   return {
     status: 200,
-    statusText: "tout va bien",
+    statusText: "OK",
   };
 };
 
-// Flag permettant de savoir si une synchronisation est en cours ou non.
 let synchronizing = false;
 
-export async function syncDB(database: Database, errorCounter: number = 0) {
-  if (synchronizing === false || errorCounter > 0) {
+export async function syncDB(database: Database) {
+  if (synchronizing === false) {
     try {
       synchronizing = true;
 
       let log = {};
       await synchronize(synchronizeParams(database, log, false));
-      // second appel obligatoire et important --> on récupère côté client les entités créés côté serveur !!!
+      // second call to synchronize to pull server changes after save/update
       log = {};
       await synchronize(synchronizeParams(database, log, true));
-
+    } finally {
       synchronizing = false;
-    } catch (e) {
-      if (errorCounter === 0) {
-        // Il se peut qu'une entité existe côté client et qu'elle ait été supprimée côté serveur ce qui provoque une exception côté serveur.
-        // On force une nouvelle sync pour que le pull mette le client à jour.
-        await syncDB(database, 1);
-      }
     }
   }
 }

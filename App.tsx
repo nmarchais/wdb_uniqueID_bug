@@ -11,10 +11,12 @@
 import DatabaseProvider from "@nozbe/watermelondb/DatabaseProvider";
 import React, {useMemo} from "react";
 import {
-  Button,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StatusBar,
+  StyleSheet,
+  Text,
   useColorScheme,
   View,
 } from "react-native";
@@ -24,6 +26,17 @@ import {createDatabase} from "./src/watermelondb/database/database";
 import {syncDB} from "./src/watermelondb/sync/syncDB";
 import {createWorkingDayWDB} from "./src/watermelondb/service/workingDayWDBService";
 import {createVisit} from "./src/watermelondb/service/visitService";
+import {Database} from "@nozbe/watermelondb";
+
+const clearDatabase = (database: Database) => () => {
+  database.write(() => database.unsafeResetDatabase());
+};
+
+const createRecords = (database: Database) => async () => {
+  const workingDay = await createWorkingDayWDB(database);
+  await createVisit(database, workingDay);
+  console.log("Records created !")
+};
 
 const App = () => {
   const database = useMemo(() => createDatabase(), []);
@@ -46,30 +59,44 @@ const App = () => {
             style={{
               backgroundColor: isDarkMode ? Colors.black : Colors.white,
             }}>
-            <Button
-              title={"Créer entités"}
-              onPress={async () => {
-                const workingDay = await createWorkingDayWDB(database);
-                await createVisit(database, workingDay);
-              }}
-            />
-            <Button
-              title={"Synchroniser"}
+            <Pressable onPress={createRecords(database)} style={styles.button}>
+              <Text style={styles.text}>Create records</Text>
+            </Pressable>
+            <Pressable
+              style={styles.button}
               onPress={() => {
                 syncDB(database);
-              }}
-            />
-            <Button
-              title={"Vider BDD"}
-              onPress={() => {
-                database.write(() => database.unsafeResetDatabase());
-              }}
-            />
+              }}>
+              <Text style={styles.text}>Synchronize</Text>
+            </Pressable>
+            <Pressable onPress={clearDatabase(database)} style={styles.button}>
+              <Text style={styles.text}>Clear Database</Text>
+            </Pressable>
           </View>
         </ScrollView>
       </SafeAreaView>
     </DatabaseProvider>
   );
 };
+
+const styles = StyleSheet.create({
+  button: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    margin: 10,
+    borderRadius: 4,
+    elevation: 3,
+    backgroundColor: "#2588FF",
+  },
+  text: {
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: "bold",
+    letterSpacing: 0.25,
+    color: "white",
+  },
+});
 
 export default App;

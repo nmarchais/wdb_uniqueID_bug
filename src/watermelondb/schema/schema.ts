@@ -1,13 +1,10 @@
-import {appSchema, tableSchema} from '@nozbe/watermelondb';
-import {tablesNotSync} from "./tablesNotSync";
-import {enhanceGeneratedSchema} from "./enhanceGeneratedSchema";
+import {appSchema, tableSchema} from "@nozbe/watermelondb";
+import {tables} from "./tables";
+import {TableSchemaSpec} from "@nozbe/watermelondb/Schema";
 
 export const schemaVersion = 1;
 
 export default appSchema({
   version: schemaVersion,
-  tables: [
-    ...enhanceGeneratedSchema().map(table => tableSchema(table)),
-    ...tablesNotSync
-  ]
+  tables: tables.map(table => tableSchema(table as TableSchemaSpec)),
 });

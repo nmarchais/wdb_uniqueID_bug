@@ -21,14 +21,11 @@ import {
 
 import {Colors, Header} from "react-native/Libraries/NewAppScreen";
 import {createDatabase} from "./src/watermelondb/database/database";
-import {useConfigureDayjs} from "./src/technical/config/dayjsConfig";
 import {syncDB} from "./src/watermelondb/sync/syncDB";
 import {createWorkingDayWDB} from "./src/watermelondb/service/workingDayWDBService";
 import {createVisit} from "./src/watermelondb/service/visitService";
 
 const App = () => {
-  useConfigureDayjs();
-
   const database = useMemo(() => createDatabase(), []);
 
   const isDarkMode = useColorScheme() === "dark";

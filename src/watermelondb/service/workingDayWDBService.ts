@@ -4,9 +4,7 @@ import WorkingDayWDB from "../model/WorkingDayWDB";
 import {Database} from "@nozbe/watermelondb";
 import VehicleWDB from "../model/VehicleWDB";
 
-export const createWorkingDayWDB = async (
-  database: Database
-) => {
+export const createWorkingDayWDB = async (database: Database) => {
   const vehicle = await database.write(async () => {
     return await database.collections
       .get<VehicleWDB>(TableName.VEHICLE)

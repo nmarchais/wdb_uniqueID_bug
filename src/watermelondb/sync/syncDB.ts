@@ -8,7 +8,6 @@ import {TableNameNotSynced} from "../schema/tableNameNotSynced";
 import SalePlaceNotAffectedToUserWDB from "../model/local/SalePlaceNotAffectedToUserWDB";
 import {TableName} from "../schema/tableName";
 import {Database} from "@nozbe/watermelondb";
-import dayjs from "dayjs";
 
 const pullSync = async (
   lastPulledAt: number | null,
@@ -20,7 +19,7 @@ const pullSync = async (
     status: 200,
     statusText: "tout va bien",
     data: {
-      timestamp: dayjs().valueOf(),
+      timestamp: Date.now(),
       changes: {},
     },
   };
